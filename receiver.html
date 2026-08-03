@@ -60,7 +60,13 @@
   var NS = 'urn:x-cast:com.veyselozturk.mirrorvo';
   var video = document.getElementById('rtc');
   var durum = document.getElementById('durum');
+  var hlsOynatici = document.querySelector('cast-media-player');
   var pc = null;
+
+  // HLS'i ANCAK WebRTC GERÇEKTEN OYNARKEN sustur. `connected` olayında
+  // susturmak erken olurdu: bağlantı kurulmuş ama ilk kare henüz çizilmemişken
+  // ekran birkaç yüz ms kararırdı. `playing` olayı medyanın aktığının kanıtı.
+  video.addEventListener('playing', hlsDurdur);
 
   function not(metin, kalici) {
     durum.textContent = metin;
@@ -70,10 +76,46 @@
 
   // ---- WebRTC cevap tarafı (taşıyıcıdan bağımsız) -------------------------
 
+  // ---- HLS katmanını sustur / geri getir ---------------------------------
+  //
+  // 🔴 ÜÇ TURLUK "SES BOZUK" ŞİKÂYETİNİN SEBEBİ BURASIYDI (2026-08-04).
+  //
+  // `<cast-media-player>` sayfada HER ZAMAN duruyor ve HLS akışını oynatıyor.
+  // WebRTC bağlanınca `#rtc` videosu onun ÜSTÜNÜ örtüyordu — ama örtmek
+  // SUSTURMAK DEĞİL. TV iki sesi aynı anda çalıyordu:
+  //   · WebRTC sesi    → ~1 sn gecikme
+  //   · HLS sesi       → ~7-8 sn gecikme
+  // Üst üste binen, 6-7 saniye kaymış iki kopya tam olarak kullanıcının
+  // tarif ettiği gibi duyulur: "hızlı konuşuyor, sıkıştırılmış, cızırtılı".
+  //
+  // GÖNDERİCİDE HİÇBİR HATA YOKTU — beş tur orada arandı ve hepsi ölçümle
+  // elendi (içerik `aSifirGecis` 12-40 ile temiz, `aUretimHz` 48005, teslim
+  // tam gerçek zamanlı, `aRed` 0, tek iplik, paket kaybı 0).
+  //
+  // İKİNCİ ARIZA, AYNI KÖKTEN: WebRTC bağlanınca telefon HLS ÜRETMEYİ
+  // bırakıyor (kareler RTC'ye gidiyor). CAF elindeki tamponu bitirince
+  // sonsuza kadar `BUFFERING`'e düşüyor ve oturumu götürüyordu — kullanıcı
+  // "TV'de hiçbir şey yok" diye bildirdi. Ölçüldü: `segments` 17'de donmuş,
+  // TV seg-0'dan seg-16'ya hepsini çekmiş, `playerState: BUFFERING`.
+  function hlsDurdur() {
+    try {
+      var pm = window.cast && cast.framework
+        && cast.framework.CastReceiverContext.getInstance().getPlayerManager();
+      if (pm) pm.stop();
+    } catch (e) { /* test kipinde CAF yok — sorun değil */ }
+    if (hlsOynatici) hlsOynatici.style.display = 'none';
+  }
+
+  function hlsGeriGetir() {
+    if (hlsOynatici) hlsOynatici.style.display = '';
+    // Yeniden oynatmayı telefon başlatıyor: `rtcKoptu()` taze LOAD gönderiyor.
+  }
+
   function rtcKapat() {
     if (pc) { try { pc.close(); } catch (e) {} pc = null; }
     video.style.display = 'none';
     video.srcObject = null;
+    hlsGeriGetir();
   }
 
   // Teklif SDP'sini alır, TAM (ICE'ı toplanmış) cevap SDP'siyle çözülür.
