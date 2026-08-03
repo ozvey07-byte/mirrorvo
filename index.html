@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>MirrorVO</title>
+<meta http-equiv="refresh" content="0; url=en/index.html">
+<script>
+var map = {"tr": "tr", "en": "en", "es": "es", "de": "de", "fr": "fr", "it": "it", "pt-BR": "pt-BR", "ja": "ja", "ru": "ru", "ar": "ar"};
+var langs = (navigator.languages || [navigator.language || 'en']);
+var target = 'en';
+for (var i = 0; i < langs.length; i++) {
+  var code = langs[i];
+  if (map[code]) { target = map[code]; break; }
+  var base = code.split('-')[0];
+  if (base === 'pt') { target = 'pt-BR'; break; }
+  if (map[base]) { target = map[base]; break; }
+}
+location.replace(target + '/index.html');
+</script>
+</head>
+<body>
+<p><a href="en/index.html">Continue</a></p>
+</body>
+</html>

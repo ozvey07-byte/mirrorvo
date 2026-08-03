@@ -1,0 +1,218 @@
+/* Perde destek sitesi — tek stil dosyası.
+ *
+ * Dış kaynak YOK (yazı tipi, betik, görsel). Sebep: App Store'un zorunlu
+ * tuttuğu destek/gizlilik sayfaları her ağdan, her tarayıcıdan açılmalı;
+ * CDN'e bağımlılık gereksiz bir kırılma noktası. Ayrıca gizlilik politikası
+ * sayfasının üçüncü taraf sunucuya istek atması metnin kendisiyle çelişirdi.
+ */
+
+:root {
+  --bg: #ffffff;
+  --fg: #1c1c1e;
+  --muted: #6b6b70;
+  --line: #e3e3e6;
+  --card: #f6f6f8;
+  --accent: #c62828;          /* uygulamadaki kırmızı "Yayını Başlat" vurgusu */
+  --accent-weak: #fdecec;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121214;
+    --fg: #ececf1;
+    --muted: #9a9aa2;
+    --line: #2c2c31;
+    --card: #1c1c20;
+    --accent: #ff6b6b;
+    --accent-weak: #2a1a1a;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 17px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        Helvetica, Arial, sans-serif;
+}
+
+.wrap {
+  max-width: 46rem;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 4rem;
+}
+
+/* ---- Başlık ---- */
+
+header.site {
+  border-bottom: 1px solid var(--line);
+  padding: 1.1rem 1.25rem;
+}
+
+header.site .inner {
+  max-width: 46rem;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.6rem 1.1rem;
+}
+
+/* ⚠️ YÖN: Arapça sayfalar `dir="rtl"` ile üretiliyor. Bu yüzden kenar
+   boşluklarında `left/right` DEĞİL mantıksal özellikler (`inline-start/end`)
+   kullanılıyor — fiziksel olanlar Arapça'da düzeni ters yerde bırakıyordu. */
+.brand {
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: -0.01em;
+  margin-inline-end: auto;
+  color: var(--fg);
+  text-decoration: none;
+}
+
+nav a {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+nav a + a { margin-inline-start: 0.9rem; }
+nav a:hover, nav a[aria-current="page"] { color: var(--fg); }
+
+/* Dil seçici — tarayıcının kendi menüsü kullanılıyor: 10 dil için kendi
+   açılır menümüzü yazmak, klavye ve ekran okuyucu desteğini sıfırdan
+   üstlenmek demekti. */
+.langpick {
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--muted);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.25rem 0.4rem;
+  max-width: 11rem;
+}
+
+noscript a {
+  font-size: 0.85rem;
+  margin-inline-start: 0.5rem;
+}
+
+/* ---- Metin ---- */
+
+h1 {
+  font-size: 1.9rem;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  margin: 1.6rem 0 0.4rem;
+}
+
+h2 {
+  font-size: 1.25rem;
+  letter-spacing: -0.01em;
+  margin: 2.4rem 0 0.6rem;
+  padding-top: 1.4rem;
+  border-top: 1px solid var(--line);
+}
+
+h2:first-of-type { border-top: none; padding-top: 0; }
+
+h3 { font-size: 1.02rem; margin: 1.4rem 0 0.35rem; }
+
+p { margin: 0.6rem 0; }
+
+.lede { color: var(--muted); font-size: 1.05rem; }
+
+.updated { color: var(--muted); font-size: 0.9rem; margin-top: 0; }
+
+ul, ol { padding-inline-start: 1.3rem; }
+li { margin: 0.35rem 0; }
+
+a { color: var(--accent); }
+
+strong { font-weight: 650; }
+
+/* ---- Bileşenler ---- */
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 1rem 1.15rem;
+  margin: 1.2rem 0;
+}
+
+.card.note {
+  background: var(--accent-weak);
+  border-color: transparent;
+}
+
+.card h3 { margin-top: 0; }
+
+/* Sorun giderme ve SSS: uzun metni katlayıp sayfayı taranabilir tutar. */
+details {
+  border-bottom: 1px solid var(--line);
+  padding: 0.75rem 0;
+}
+
+details > summary {
+  cursor: pointer;
+  font-weight: 550;
+  list-style: none;
+  display: flex;
+  gap: 0.6rem;
+  align-items: baseline;
+}
+
+details > summary::-webkit-details-marker { display: none; }
+
+details > summary::before {
+  content: "+";
+  color: var(--accent);
+  font-weight: 700;
+  width: 0.9rem;
+  flex: none;
+}
+
+details[open] > summary::before { content: "−"; }
+
+details > *:not(summary) { color: var(--muted); }
+
+.steps { counter-reset: step; list-style: none; padding-inline-start: 0; }
+
+.steps li {
+  counter-increment: step;
+  display: flex;
+  gap: 0.75rem;
+  margin: 0.7rem 0;
+}
+
+.steps li::before {
+  content: counter(step);
+  flex: none;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 650;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+footer.site {
+  margin-top: 3rem;
+  padding-top: 1.4rem;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+footer.site a { color: var(--muted); }

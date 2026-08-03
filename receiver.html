@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<title>MirrorVO — Cast alıcısı</title>
+<!--
+  CUSTOM WEB RECEIVER — iki katlı:
+
+  1. HLS katmanı (her zaman): CAF'ın kendi <cast-media-player> öğesi. Telefon
+     standart medya ad alanından LOAD gönderiyor; ücretsiz kullanıcı ve her tür
+     geri düşüş bu katmanda oynuyor. Bu sayfada onunla ilgili KOD YOK — CAF
+     LOAD'ı kendisi işler; bizim işimiz yalnız öğeyi sayfada bulundurmak.
+
+  2. WebRTC katmanı (premium): telefon nsCustom kanalından SDP teklifi yollar,
+     burada cevap üretilir, medya LAN'da RTP/UDP ile gelir ve tam ekran <video>
+     öğesinde oynar. Bağlanınca HLS oynatıcının ÜSTÜNÜ örter; koparsa gizlenir
+     ve altta HLS geri görünür (telefon o an taze LOAD gönderiyor).
+
+  SİNYALLEŞME CAST KANALINDAN: WebSocket YOK. §40'taki karışık içerik engeli
+  böylece tamamen konu dışı — sayfa HTTPS'ten de yüklense Cast mesajlaşması
+  tarayıcı kuralına tabi değil, RTP/UDP de değil.
+
+  Trickle ICE YOK (telefon tarafıyla simetrik): cevap, ICE toplaması bitince
+  TEK mesajla döner. LAN'da yalnız host adayları var, toplama ~anlık.
+
+  TEST KAPISI: ?test=1 ile normal tarayıcıda açılırsa Cast çerçevesi hiç
+  başlatılmaz; `mvoTest.offer(sdp)` cevabı Promise olarak döndürür. Gerçek TV
+  olmadan cevap üretimi ve bağlantı kurulumu böyle sınanıyor (loopback).
+-->
+<script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  cast-media-player { --background-color: #000; }
+  /* RTC videosu her şeyin üstünde; yalnız akış bağlıyken görünür. */
+  #rtc {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: contain; background: #000; display: none; z-index: 10;
+  }
+  /* Küçük durum rozeti — yalnız sorun anında görünür, teşhis için. */
+  #durum {
+    position: absolute; left: 16px; bottom: 16px; z-index: 20;
+    font: 15px -apple-system, Roboto, sans-serif; color: #9aa;
+    background: rgba(0,0,0,.55); padding: 4px 10px; border-radius: 6px;
+    display: none;
+  }
+</style>
+</head>
+<body>
+<cast-media-player></cast-media-player>
+<!-- muted YOK: ses izi de bu akıştan geliyor. Cast alıcısı
+     kullanıcı etkileşimi istemez (otomatik oynatma serbest),
+     bu yüzden tarayıcıdaki "muted olmadan autoplay engellenir"
+     kuralı burada geçerli değil. -->
+<video id="rtc" autoplay playsinline></video>
+<div id="durum"></div>
+
+<script>
+(function () {
+  'use strict';
+  var NS = 'urn:x-cast:com.veyselozturk.mirrorvo';
+  var video = document.getElementById('rtc');
+  var durum = document.getElementById('durum');
+  var pc = null;
+
+  function not(metin, kalici) {
+    durum.textContent = metin;
+    durum.style.display = metin ? 'block' : 'none';
+    if (!kalici && metin) setTimeout(function () { durum.style.display = 'none'; }, 8000);
+  }
+
+  // ---- WebRTC cevap tarafı (taşıyıcıdan bağımsız) -------------------------
+
+  function rtcKapat() {
+    if (pc) { try { pc.close(); } catch (e) {} pc = null; }
+    video.style.display = 'none';
+    video.srcObject = null;
+  }
+
+  // Teklif SDP'sini alır, TAM (ICE'ı toplanmış) cevap SDP'siyle çözülür.
+  function cevapla(offerSdp) {
+    rtcKapat();  // önceki oturum kalıntısı yeni pazarlığı bozmasın
+    pc = new RTCPeerConnection({ iceServers: [] });  // LAN: host adayları yeter
+
+    // 🔴 İZLER BİRİKTİRİLİR, ATANMAZ. Önceki hâli her `ontrack`'te
+    // `srcObject`'i baştan yazıyordu: ses ve video AYRI akışlarda geldiğinde
+    // son gelen öncekini siliyordu ve TV'de "görüntü var ses yok" (ya da tersi)
+    // oluyordu. Testte birebir görüldü — alıcıda yalnız ses izi kaldı, video
+    // 0x0'a düştü. Gönderen tarafta ikisine de aynı streamId veriliyor ama
+    // buna GÜVENİLMEZ: tek bir tarafın değişmesi sessizce yarım medya üretir.
+    var gelen = new MediaStream();
+    pc.ontrack = function (ev) {
+      gelen.addTrack(ev.track);
+      if (video.srcObject !== gelen) video.srcObject = gelen;
+      video.style.display = 'block';
+    };
+    pc.onconnectionstatechange = function () {
+      if (!pc) return;
+      if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected'
+          || pc.connectionState === 'closed') {
+        // HLS katmanı altta duruyor; telefon kopuşu görüp taze LOAD gönderiyor.
+        not('Düşük gecikme bağlantısı koptu, HLS akışına dönülüyor…');
+        rtcKapat();
+      }
+    };
+
+    return pc.setRemoteDescription({ type: 'offer', sdp: offerSdp })
+      .then(function () { return pc.createAnswer(); })
+      .then(function (ans) { return pc.setLocalDescription(ans); })
+      .then(function () {
+        // Trickle yok: toplama bitene kadar bekle, tam SDP'yi tek parça döndür.
+        return new Promise(function (resolve) {
+          if (pc.iceGatheringState === 'complete') return resolve();
+          pc.onicegatheringstatechange = function () {
+            if (pc && pc.iceGatheringState === 'complete') resolve();
+          };
+          // Emniyet: LAN'da toplama anlıktır ama tarayıcı mDNS adayı beklerken
+          // takılabiliyor — 2 sn sonra eldekiyle devam. Eksik aday LAN'da
+          // pratikte sorun değil (host adayı ilk milisaniyede geliyor).
+          setTimeout(resolve, 2000);
+        });
+      })
+      .then(function () { return pc.localDescription.sdp; });
+  }
+
+  // ---- Taşıyıcı: Cast kanalı ya da test kapısı ----------------------------
+
+  if (new URLSearchParams(location.search).has('test')) {
+    // Normal tarayıcı: Cast çerçevesi Cast cihazı dışında başlatılamaz.
+    window.mvoTest = { offer: cevapla, kapat: rtcKapat };
+    not('TEST KİPİ — mvoTest.offer(sdp) bekleniyor', true);
+    return;
+  }
+
+  var context = cast.framework.CastReceiverContext.getInstance();
+
+  context.addCustomMessageListener(NS, function (ev) {
+    var m = ev.data || {};
+    if (m.type === 'offer' && m.sdp) {
+      cevapla(m.sdp).then(function (answerSdp) {
+        context.sendCustomMessage(NS, ev.senderId, { type: 'answer', sdp: answerSdp });
+      }).catch(function (e) {
+        not('Cevap üretilemedi: ' + e, true);
+        context.sendCustomMessage(NS, ev.senderId, { type: 'rtc-error', error: String(e) });
+      });
+    }
+    // "ws" alanı: eski prob mesajı — artık kullanılmıyor, sessizce yok sayılır.
+  });
+
+  var opts = new cast.framework.CastReceiverOptions();
+  // Boşta kapanmayı kapatma: RTC akarken CAF "medya yok" sanıp oturumu bitirir.
+  opts.disableIdleTimeout = true;
+  opts.customNamespaces = {};
+  opts.customNamespaces[NS] = cast.framework.system.MessageType.JSON;
+  // Gönderene "sayfa hazır" de — teklif bunun ÜZERİNE üretilir. senderId'yi
+  // henüz bilmiyoruz; broadcast (undefined) tüm bağlı gönderenlere gider,
+  // bizde zaten tek gönderen var.
+  //
+  // 🔴 SIRA ŞART (2026-08-03): dinleyici `start()`ten ÖNCE eklenmeli.
+  // Eskiden `start(opts)` önce çağrılıyor, READY dinleyicisi sonra ekleniyordu;
+  // CAF bu olayı `start()` SIRASINDA ateşleyebildiği için olay kaçıyor ve
+  // 'ready' HİÇ gönderilmiyordu. Sonuç: özel alıcı açılıyor, TV görüntüyü HLS
+  // katmanından oynatıyor ama WebRTC pazarlığı hiç başlamıyordu
+  // (ölçüldü: receiverMessages = 0, rtcState boş, gecikme ~10 sn).
+  var hazirGonderildi = false;
+  function hazirBildir() {
+    if (hazirGonderildi) return;      // mükerrer 'ready' iki teklif üretir
+    hazirGonderildi = true;
+    context.sendCustomMessage(NS, undefined, { type: 'ready' });
+  }
+  context.addEventListener(cast.framework.system.EventType.READY, hazirBildir);
+
+  context.start(opts);
+
+  // Güvence: READY `start()` içinde ateşlenip dinleyiciden önce geçtiyse bile
+  // haber verilsin. `hazirGonderildi` bayrağı mükerrer göndermeyi engelliyor.
+  setTimeout(hazirBildir, 1500);
+}());
+</script>
+</body>
+</html>
