@@ -1,0 +1,18 @@
+{
+  "name": "mirrorvo-site",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MirrorVO destek sitesi — 10 dilli statik GitHub Pages sitesi ve Cast alıcısı.",
+  "scripts": {
+    "lint:html": "html-validate \"**/*.html\"",
+    "lint:css": "stylelint \"**/*.css\"",
+    "lint": "npm run lint:html && npm run lint:css",
+    "test": "node tools/check-site.mjs",
+    "serve": "python3 -m http.server 8000"
+  },
+  "devDependencies": {
+    "html-validate": "^11.12.0",
+    "stylelint": "^17.14.1",
+    "stylelint-config-standard": "^40.0.0"
+  }
+}
