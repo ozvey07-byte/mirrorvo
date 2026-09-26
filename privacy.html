@@ -5,7 +5,7 @@
 <title>MirrorVO</title>
 <meta http-equiv="refresh" content="0; url=en/privacy.html">
 <script>
-var map = {"tr": "tr", "en": "en", "es": "es", "de": "de", "fr": "fr", "it": "it", "pt-BR": "pt-BR", "ja": "ja", "ru": "ru", "ar": "ar"};
+var map = {"tr": "tr", "en": "en", "es": "es", "de": "de", "fr": "fr", "it": "it", "pt-BR": "pt-BR", "ja": "ja", "ru": "ru", "ar": "ar", "nl": "nl", "pl": "pl", "sv": "sv", "da": "da", "nb": "nb", "fi": "fi", "cs": "cs", "sk": "sk", "hu": "hu", "ro": "ro", "el": "el", "uk": "uk", "hr": "hr", "sr": "sr", "sl": "sl", "bg": "bg", "sq": "sq", "et": "et", "lv": "lv", "lt": "lt"};
 var langs = (navigator.languages || [navigator.language || 'en']);
 var target = 'en';
 for (var i = 0; i < langs.length; i++) {
@@ -13,6 +13,7 @@ for (var i = 0; i < langs.length; i++) {
   if (map[code]) { target = map[code]; break; }
   var base = code.split('-')[0];
   if (base === 'pt') { target = 'pt-BR'; break; }
+  if (base === 'no' || base === 'nn') { target = 'nb'; break; }
   if (map[base]) { target = map[base]; break; }
 }
 location.replace(target + '/privacy.html');

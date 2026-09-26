@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="et" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Peegeldage iPhone&#x27;i või iPadi ekraan Wi-Fi kaudu telerisse, Chromecastiga või ilma. Reklaame pole, kontot pole vaja, andmeid ei koguta.">
+<title>MirrorVO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --zemin:#060D0C; --zemin2:#0B1614; --yuzey:#10201D; --cizgi:#1E3430;
+    --metin:#E6F2EF; --soluk:#8FA8A3; --vurgu:#2FD9C0; --vurgu-koyu:#0E3B36;
+    --kehribar:#E3A75C;
+    --govde:"Archivo","Helvetica Neue",Arial,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--zemin);color:var(--metin);font-family:var(--govde);
+       font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .kap{width:min(1080px,92vw);margin-inline:auto}
+  h1,h2,h3{text-wrap:balance;margin:0;font-variation-settings:"wdth" 108}
+  h1{font-size:clamp(2.4rem,6vw,4.1rem);line-height:1.02;font-weight:800;letter-spacing:-.02em}
+  h2{font-size:clamp(1.5rem,3vw,2.1rem);font-weight:700;letter-spacing:-.015em}
+  h3{font-size:1.06rem;font-weight:700;letter-spacing:-.005em}
+  p{margin:0}
+  a{color:var(--vurgu)}
+  .etiket{font-family:var(--mono);font-size:.74rem;letter-spacing:.16em;
+          text-transform:uppercase;color:var(--soluk)}
+
+  /* ——— üst çubuk ——— */
+  .ust{position:sticky;top:0;z-index:9;backdrop-filter:blur(14px);
+       background:color-mix(in srgb,var(--zemin) 86%,transparent);
+       border-bottom:1px solid var(--cizgi)}
+  .ust .kap{display:flex;align-items:center;gap:16px;height:60px}
+  .marka{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:-.01em}
+  .rozet{width:26px;height:26px;border-radius:7px;background:var(--vurgu-koyu);
+         color:var(--vurgu);display:grid;place-items:center;font-family:var(--mono);
+         font-size:.66rem;font-weight:500;border:1px solid var(--cizgi)}
+  .bosluk{flex:1}
+  .ustbag{color:var(--soluk);text-decoration:none;font-size:.9rem}
+  .ustbag:hover{color:var(--vurgu)}
+  .langpick{font-family:var(--mono);font-size:.74rem;color:var(--metin);
+      background:var(--zemin2);border:1px solid var(--cizgi);border-radius:999px;
+      padding:5px 10px;max-width:9.5rem;min-width:0;cursor:pointer}
+  .langpick:focus-visible,a:focus-visible,.indir:focus-visible{outline:2px solid var(--vurgu);outline-offset:3px}
+
+  /* ——— giriş ——— */
+  .giris{padding:clamp(48px,7vw,86px) 0 clamp(40px,5vw,64px);
+         border-bottom:1px solid var(--cizgi);
+         background:radial-gradient(120% 90% at 78% 6%,#0D2320 0%,var(--zemin) 62%)}
+  .giris .kap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.92fr);
+              gap:clamp(28px,5vw,64px);align-items:center}
+  .giris p.satis{margin-top:20px;max-width:34em;color:var(--soluk);font-size:1.08rem}
+  .cta{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:30px}
+  .indir{display:inline-flex;align-items:center;gap:10px;background:var(--vurgu);
+         color:#05201C;font-weight:700;text-decoration:none;padding:13px 22px;border-radius:12px;
+         letter-spacing:-.01em}
+  .indir:hover{background:#4EE6D0}
+  .cta .not{font-family:var(--mono);font-size:.76rem;color:var(--soluk)}
+
+  /* ——— telefon + TV ——— */
+  .sahne{position:relative;display:grid;grid-template-columns:minmax(0,1fr);justify-items:end}
+  .tv{width:100%;border:1px solid var(--cizgi);border-radius:10px;background:var(--zemin2);
+      padding:10px 10px 0;box-shadow:0 30px 70px -40px #000}
+  .tv .cam{aspect-ratio:16/9;border-radius:4px;overflow:hidden;background:#000;
+           display:grid;place-items:center}
+  .tv .cam img{width:auto;height:150%;opacity:.92;filter:saturate(.95)}
+  .tv .ayak{height:14px;display:grid;place-items:center}
+  .tv .ayak span{width:76px;height:4px;border-radius:0 0 4px 4px;background:var(--cizgi)}
+  .telefon{width:min(178px,34%);position:absolute;left:0;bottom:-18px;
+           border:1px solid var(--cizgi);border-radius:22px;overflow:hidden;background:#000;
+           box-shadow:0 26px 50px -22px #000}
+  .telefon img{display:block;width:100%}
+
+  /* ——— kanıt bandı ——— */
+  .kanit{border-bottom:1px solid var(--cizgi);background:var(--zemin2)}
+  .kanit .kap{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--cizgi)}
+  .kanit .hucre{background:var(--zemin2);padding:26px 24px}
+  .kanit h3{color:var(--vurgu);margin-bottom:6px}
+  .kanit p{color:var(--soluk);font-size:.95rem}
+
+  /* ——— bölümler ——— */
+  section.blok{padding:clamp(46px,6vw,78px) 0;border-bottom:1px solid var(--cizgi)}
+  .baslik{max-width:38em}
+  .baslik p{color:var(--soluk);margin-top:12px}
+  .ikili{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.78fr);
+         gap:clamp(28px,5vw,60px);align-items:center}
+  .ikili img.ekran{width:100%;border:1px solid var(--cizgi);border-radius:18px;display:block}
+  .yollar{display:grid;gap:18px;margin-top:26px}
+  .yol{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start;
+       padding:20px;border:1px solid var(--cizgi);border-radius:14px;background:var(--zemin2)}
+  .yol .im{width:34px;height:34px;border-radius:9px;background:var(--vurgu-koyu);color:var(--vurgu);
+           display:grid;place-items:center;font-family:var(--mono);font-size:.8rem}
+  .yol p{color:var(--soluk);font-size:.95rem;margin-top:5px}
+
+  /* ——— adımlar: gerçek bir sıra olduğu için numaralı ——— */
+  ol.adimlar{list-style:none;margin:26px 0 0;padding:0;display:grid;
+             grid-template-columns:repeat(3,1fr);gap:1px;background:var(--cizgi);
+             border:1px solid var(--cizgi);border-radius:14px;overflow:hidden}
+  ol.adimlar li{background:var(--zemin2);padding:22px}
+  ol.adimlar .no{font-family:var(--mono);color:var(--vurgu);font-size:.78rem;display:block;margin-bottom:8px}
+  .uyari{margin-top:18px;font-size:.92rem;color:var(--soluk);border-left:2px solid var(--kehribar);padding-left:14px}
+
+  /* ——— künye: reklam değil, teknik doğrular ——— */
+  .kunye{background:var(--zemin2)}
+  .kunye dl{margin:26px 0 0;display:grid;gap:1px;background:var(--cizgi);
+            border:1px solid var(--cizgi);border-radius:14px;overflow:hidden}
+  .kunye .satir{background:var(--zemin2);padding:18px 22px;display:grid;
+                grid-template-columns:minmax(0,15em) minmax(0,1fr);gap:20px}
+  .kunye dt{font-family:var(--mono);font-size:.82rem;color:var(--kehribar);line-height:1.5}
+  .kunye dd{margin:0;color:var(--soluk);font-size:.95rem}
+
+  /* ——— fiyat ——— */
+  .fiyat{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-top:26px}
+  .kutu{border:1px solid var(--cizgi);border-radius:16px;padding:24px;background:var(--zemin2)}
+  .kutu.one{border-color:var(--vurgu);background:linear-gradient(180deg,#0F2B27,var(--zemin2))}
+  .kutu .tutar{font-size:1.5rem;font-weight:800;letter-spacing:-.02em;margin-top:4px}
+  .kutu ul{margin:14px 0 0;padding-left:1.1em;color:var(--soluk);font-size:.95rem}
+  .kutu li{margin-bottom:6px}
+
+  footer{padding:36px 0 54px;color:var(--soluk);font-size:.9rem}
+  footer .kap{display:flex;flex-wrap:wrap;gap:14px 26px;align-items:center}
+  footer a{color:var(--soluk)}
+  footer a:hover{color:var(--vurgu)}
+
+  @media (max-width:860px){
+    .giris .kap,.ikili{grid-template-columns:minmax(0,1fr)}
+    .ust .kap{gap:10px}
+    .kanit .kap,ol.adimlar,.fiyat{grid-template-columns:1fr}
+    .sahne{justify-items:stretch;margin-top:26px}
+    .telefon{position:static;width:min(210px,52%);margin:-30px auto 0}
+    .kunye .satir{grid-template-columns:1fr;gap:6px}
+  }
+  @media (max-width:400px){h1{font-size:2.1rem;hyphens:auto;overflow-wrap:break-word}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<header class="ust"><div class="kap">
+  <span class="marka"><span class="rozet">VO</span>MirrorVO</span>
+  <span class="bosluk"></span>
+  <a href="../../et/" class="ustbag">Tugi</a>
+  <select class="langpick" aria-label="Language" onchange="location.href=this.value"><option value="../tr/">Türkçe</option><option value="../en/">English</option><option value="../es/">Español</option><option value="../de/">Deutsch</option><option value="../fr/">Français</option><option value="../it/">Italiano</option><option value="../pt-BR/">Português (Brasil)</option><option value="../ja/">日本語</option><option value="../ru/">Русский</option><option value="../ar/">العربية</option><option value="../nl/">Nederlands</option><option value="../pl/">Polski</option><option value="../sv/">Svenska</option><option value="../da/">Dansk</option><option value="../nb/">Norsk bokmål</option><option value="../fi/">Suomi</option><option value="../cs/">Čeština</option><option value="../sk/">Slovenčina</option><option value="../hu/">Magyar</option><option value="../ro/">Română</option><option value="../el/">Ελληνικά</option><option value="../uk/">Українська</option><option value="../hr/">Hrvatski</option><option value="../sr/">Српски</option><option value="../sl/">Slovenščina</option><option value="../bg/">Български</option><option value="../sq/">Shqip</option><option value="../et/" selected>Eesti</option><option value="../lv/">Latviešu</option><option value="../lt/">Lietuvių</option></select>
+</div></header>
+
+<section class="giris"><div class="kap">
+  <div>
+    <span class="etiket">iPhone · iPad · Wi-Fi</span>
+    <h1
+        style="margin-top:14px">Teie ekraan teleris. Chromecastiga või ilma.</h1>
+    <p class="satis">MirrorVO peegeldab teie iPhone&#x27;i või iPadi ekraani telerisse teie oma Wi-Fi-võrgu kaudu. Kui teil on Chromecast, valige see loendist. Kui ei ole, kasutage teleri enda veebibrauserit — lühikese aadressi sisestate vaid ühe korra.</p>
+    <div class="cta">
+      <a class="indir" href="https://apps.apple.com/app/id6799552665">Laadi alla App Store&#x27;ist</a>
+      <span class="not">Kontot pole vaja · Reklaame pole · Andmeid ei koguta</span>
+    </div>
+  </div>
+  <div class="sahne">
+    <div class="tv">
+      <div class="cam"><img src="../img/en/ekran-1.png" alt=""></div>
+      <div class="ayak"><span></span></div>
+    </div>
+    <div class="telefon"><img src="../img/en/ekran-1.png"
+      alt="MirrorVO avaekraan: Edasta telerisse, Telefonist telefoni"></div>
+  </div>
+</div></section>
+
+<section class="kanit"><div class="kap">
+  <div class="hucre">
+    <h3>Reklaame pole. Üldse.</h3>
+    <p>Ei käivitamisel, ei enne edastust ega ostuekraanil. Ka mitte tasuta kasutamisel.</p>
+  </div>
+  <div class="hucre">
+    <h3>Kontot pole vaja</h3>
+    <p>Midagi pole vaja registreerida. Avage rakendus ja alustage peegeldamist.</p>
+  </div>
+  <div class="hucre">
+    <h3>Andmeid ei koguta</h3>
+    <p>Apple&#x27;i privaatsussilt meie App Store&#x27;i lehel ütleb „Andmeid ei koguta“. Pilt liigub otse telefonist sihtkohta ega läbi kunagi meie servereid.</p>
+  </div>
+</div></section>
+
+<section class="blok"><div class="kap">
+  <div class="ikili">
+    <div>
+      <div class="baslik">
+        <span class="etiket">Kaks teed</span>
+        <h2 style="margin-top:10px">Töötab ka ilma Chromecastita</h2>
+        <p>Enamik selle kategooria rakendusi nõuab Chromecasti. MirrorVO pakub teist teed: teleri enda veebibrauserit.</p>
+      </div>
+      <div class="yollar">
+        <div class="yol"><span class="im">1</span><div>
+          <h3>Chromecastiga</h3>
+          <p>Chromecast või sisseehitatud Chromecastiga teler: valige see loendist ja alustage.</p>
+        </div></div>
+        <div class="yol"><span class="im">2</span><div>
+          <h3>Ilma</h3>
+          <p>MirrorVO näitab lühikest aadressi, sisestate selle ühe korra telerisse ja teie ekraan ilmub. Katsetatud TCL-, Philipsi ja Samsungi teleritel.</p>
+        </div></div>
+      </div>
+    </div>
+    <img class="ekran" src="../img/en/ekran-2.png"
+         alt="Telerite loend reaga: Telerit pole loendis? Peegeldage teleri enda brauseri kaudu">
+  </div>
+</div></section>
+
+<section class="blok"><div class="kap">
+  <div class="ikili" style="direction:rtl">
+    <div style="direction:ltr">
+      <div class="baslik">
+        <span class="etiket">Telerit pole vaja</span>
+        <h2 style="margin-top:10px">Peegeldage teise telefoni</h2>
+        <p>Kaks kõrvuti telefoni ühenduvad otse — nad ei pea isegi samas Wi-Fi-võrgus olema. Üks näitab koodi, teine sisestab selle.</p>
+      </div>
+    </div>
+    <img class="ekran" src="../img/en/ekran-3.png" style="direction:ltr"
+         alt="Ekraan Telefonist telefoni: Peegelda see telefon või Vaata edastust">
+  </div>
+</div></section>
+
+<section class="blok"><div class="kap">
+  <div class="baslik">
+    <span class="etiket">Kolm sammu</span>
+    <h2 style="margin-top:10px">Kuidas see töötab</h2>
+  </div>
+  <ol class="adimlar">
+    <li><span class="no">01</span><h3>Sama Wi-Fi</h3>
+      <p style="color:var(--soluk);font-size:.95rem;margin-top:6px">Ühendage telefon ja teler samasse võrku.</p></li>
+    <li><span class="no">02</span><h3>Valige teler</h3>
+      <p style="color:var(--soluk);font-size:.95rem;margin-top:6px">Valige see loendist või kasutage brauseri teed.</p></li>
+    <li><span class="no">03</span><h3>Alusta edastust</h3>
+      <p style="color:var(--soluk);font-size:.95rem;margin-top:6px">Pildi ilmumine telerisse võib võtta 10–15 sekundit.</p></li>
+  </ol>
+  <p class="uyari">Seda saate alustada ainult teie. iOS ei luba rakendustel ise ekraani edastamist alustada — süsteemiaken küsib iga kord teie kinnitust.</p>
+</div></section>
+
+<section class="blok kunye"><div class="kap">
+  <div class="baslik">
+    <span class="etiket">Ausalt</span>
+    <h2 style="margin-top:10px">Mida see ei suuda</h2>
+    <p>See on kirjas ka meie App Store&#x27;i lehel. Eelistame, et teate seda enne allalaadimist, mitte pärast.</p>
+  </div>
+  <dl>
+    <div class="satir"><dt>Netflix, Disney+</dt>
+      <dd>Need paistavad mustana. See on teenuse enda kopeerimiskaitse, mitte puuduv funktsioon — ükski rakendus ei saa sellest mööda.</dd></div>
+    <div class="satir"><dt>Viivitus</dt>
+      <dd>See ei ole hetkeline. Arvestage lühikese viivitusega; selline on selle tehnoloogia olemus.</dd></div>
+    <div class="satir"><dt>Miracast</dt>
+      <dd>Teleri menüüs olev valik „Screen Mirroring“ on Miracast. iPhone ei toeta Miracasti ja ükski rakendus ei saa seda kasutada.</dd></div>
+    <div class="satir"><dt>AirPlay</dt>
+      <dd>Apple ei luba rakendustel AirPlay peegeldamist otse käivitada. AirPlay teleritel kasutage juhtimiskeskuse ekraani peegeldamist.</dd></div>
+  </dl>
+</div></section>
+
+<section class="blok"><div class="kap">
+  <div class="baslik">
+    <span class="etiket">Kvaliteet ja hind</span>
+    <h2 style="margin-top:10px">Kvaliteedi valite teie</h2>
+    <p>Neli taset kuni 1080p60, midagi pole lukus. Kui võrk ei jaksa, langeb kvaliteet ise ühe astme ja tõuseb tagasi, kui saab — teil pole vaja midagi teha.</p>
+  </div>
+  <div class="fiyat">
+    <div class="kutu one">
+      <span class="etiket" style="color:var(--vurgu)">Teie esimesest edastusest</span>
+      <div class="tutar">24 tundi täiesti tasuta</div>
+      <ul>
+        <li>Parim kvaliteet, midagi pole lukus</li>
+        <li>Väikseim viivitus</li>
+        <li>Näete, et see töötab teie enda teleris, enne kui midagi maksate</li>
+      </ul>
+    </div>
+    <div class="kutu">
+      <span class="etiket">Seejärel</span>
+      <div class="tutar">Kuu- või aastapõhiselt</div>
+      <ul>
+        <li>Tasuta 24 tunni jaoks pole kaardiandmeid vaja</li>
+        <li>Hinnad sõltuvad piirkonnast ja kuvatakse rakenduses enne ostu</li>
+        <li>Tühistage igal ajal: Seaded → Apple&#x27;i konto → Tellimused</li>
+      </ul>
+    </div>
+  </div>
+</div></section>
+
+<section class="blok"><div class="kap">
+  <div class="baslik">
+    <span class="etiket">30 keelt</span>
+    <h2 style="margin-top:10px">Avaneb teie telefoni keeles</h2>
+    <p>Türkçe, English, Deutsch, Español, Français, Русский, 日本語, العربية ja veel 22. Kui telefon on ühes keeles, aga soovite rakendust teises: Seaded → Keel. Ülejäänud telefon ei muutu.</p>
+  </div>
+  <div class="cta">
+    <a class="indir" href="https://apps.apple.com/app/id6799552665">Laadi alla App Store&#x27;ist</a>
+  </div>
+</div></section>
+
+<footer><div class="kap">
+  <span class="marka"><span class="rozet">VO</span>MirrorVO</span>
+  <span class="bosluk"></span>
+  <a href="../../et/">Tugi</a>
+  <a href="../../et/privacy.html">Privaatsus</a>
+  <a href="../../et/terms.html">Tingimused</a>
+  <a href="mailto:ozvey07@gmail.com">ozvey07@gmail.com</a>
+</div></footer>
+</body>
+</html>

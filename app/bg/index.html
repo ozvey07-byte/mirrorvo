@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="bg" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Пренасяйте екрана на iPhone или iPad на телевизора през Wi-Fi, с или без Chromecast. Без реклами, без акаунт, без събиране на данни.">
+<title>MirrorVO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --zemin:#060D0C; --zemin2:#0B1614; --yuzey:#10201D; --cizgi:#1E3430;
+    --metin:#E6F2EF; --soluk:#8FA8A3; --vurgu:#2FD9C0; --vurgu-koyu:#0E3B36;
+    --kehribar:#E3A75C;
+    --govde:"Archivo","Helvetica Neue",Arial,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--zemin);color:var(--metin);font-family:var(--govde);
+       font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  .kap{width:min(1080px,92vw);margin-inline:auto}
+  h1,h2,h3{text-wrap:balance;margin:0;font-variation-settings:"wdth" 108}
+  h1{font-size:clamp(2.4rem,6vw,4.1rem);line-height:1.02;font-weight:800;letter-spacing:-.02em}
+  h2{font-size:clamp(1.5rem,3vw,2.1rem);font-weight:700;letter-spacing:-.015em}
+  h3{font-size:1.06rem;font-weight:700;letter-spacing:-.005em}
+  p{margin:0}
+  a{color:var(--vurgu)}
+  .etiket{font-family:var(--mono);font-size:.74rem;letter-spacing:.16em;
+          text-transform:uppercase;color:var(--soluk)}
+
+  /* ——— üst çubuk ——— */
+  .ust{position:sticky;top:0;z-index:9;backdrop-filter:blur(14px);
+       background:color-mix(in srgb,var(--zemin) 86%,transparent);
+       border-bottom:1px solid var(--cizgi)}
+  .ust .kap{display:flex;align-items:center;gap:16px;height:60px}
+  .marka{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:-.01em}
+  .rozet{width:26px;height:26px;border-radius:7px;background:var(--vurgu-koyu);
+         color:var(--vurgu);display:grid;place-items:center;font-family:var(--mono);
+         font-size:.66rem;font-weight:500;border:1px solid var(--cizgi)}
+  .bosluk{flex:1}
+  .ustbag{color:var(--soluk);text-decoration:none;font-size:.9rem}
+  .ustbag:hover{color:var(--vurgu)}
+  .langpick{font-family:var(--mono);font-size:.74rem;color:var(--metin);
+      background:var(--zemin2);border:1px solid var(--cizgi);border-radius:999px;
+      padding:5px 10px;max-width:9.5rem;min-width:0;cursor:pointer}
+  .langpick:focus-visible,a:focus-visible,.indir:focus-visible{outline:2px solid var(--vurgu);outline-offset:3px}
+
+  /* ——— giriş ——— */
+  .giris{padding:clamp(48px,7vw,86px) 0 clamp(40px,5vw,64px);
+         border-bottom:1px solid var(--cizgi);
+         background:radial-gradient(120% 90% at 78% 6%,#0D2320 0%,var(--zemin) 62%)}
+  .giris .kap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.92fr);
+              gap:clamp(28px,5vw,64px);align-items:center}
+  .giris p.satis{margin-top:20px;max-width:34em;color:var(--soluk);font-size:1.08rem}
+  .cta{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:30px}
+  .indir{display:inline-flex;align-items:center;gap:10px;background:var(--vurgu);
+         color:#05201C;font-weight:700;text-decoration:none;padding:13px 22px;border-radius:12px;
+         letter-spacing:-.01em}
+  .indir:hover{background:#4EE6D0}
+  .cta .not{font-family:var(--mono);font-size:.76rem;color:var(--soluk)}
+
+  /* ——— telefon + TV ——— */
+  .sahne{position:relative;display:grid;grid-template-columns:minmax(0,1fr);justify-items:end}
+  .tv{width:100%;border:1px solid var(--cizgi);border-radius:10px;background:var(--zemin2);
+      padding:10px 10px 0;box-shadow:0 30px 70px -40px #000}
+  .tv .cam{aspect-ratio:16/9;border-radius:4px;overflow:hidden;background:#000;
+           display:grid;place-items:center}
+  .tv .cam img{width:auto;height:150%;opacity:.92;filter:saturate(.95)}
+  .tv .ayak{height:14px;display:grid;place-items:center}
+  .tv .ayak span{width:76px;height:4px;border-radius:0 0 4px 4px;background:var(--cizgi)}
+  .telefon{width:min(178px,34%);position:absolute;left:0;bottom:-18px;
+           border:1px solid var(--cizgi);border-radius:22px;overflow:hidden;background:#000;
+           box-shadow:0 26px 50px -22px #000}
+  .telefon img{display:block;width:100%}
+
+  /* ——— kanıt bandı ——— */
+  .kanit{border-bottom:1px solid var(--cizgi);background:var(--zemin2)}
+  .kanit .kap{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--cizgi)}
+  .kanit .hucre{background:var(--zemin2);padding:26px 24px}
+  .kanit h3{color:var(--vurgu);margin-bottom:6px}
+  .kanit p{color:var(--soluk);font-size:.95rem}
+
+  /* ——— bölümler ——— */
+  section.blok{padding:clamp(46px,6vw,78px) 0;border-bottom:1px solid var(--cizgi)}
+  .baslik{max-width:38em}
+  .baslik p{color:var(--soluk);margin-top:12px}
+  .ikili{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.78fr);
+         gap:clamp(28px,5vw,60px);align-items:center}
+  .ikili img.ekran{width:100%;border:1px solid var(--cizgi);border-radius:18px;display:block}
+  .yollar{display:grid;gap:18px;margin-top:26px}
+  .yol{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start;
+       padding:20px;border:1px solid var(--cizgi);border-radius:14px;background:var(--zemin2)}
+  .yol .im{width:34px;height:34px;border-radius:9px;background:var(--vurgu-koyu);color:var(--vurgu);
+           display:grid;place-items:center;font-family:var(--mono);font-size:.8rem}
+  .yol p{color:var(--soluk);font-size:.95rem;margin-top:5px}
+
+  /* ——— adımlar: gerçek bir sıra olduğu için numaralı ——— */
+  ol.adimlar{list-style:none;margin:26px 0 0;padding:0;display:grid;
+             grid-template-columns:repeat(3,1fr);gap:1px;background:var(--cizgi);
+             border:1px solid var(--cizgi);border-radius:14px;overflow:hidden}
+  ol.adimlar li{background:var(--zemin2);padding:22px}
+  ol.adimlar .no{font-family:var(--mono);color:var(--vurgu);font-size:.78rem;display:block;margin-bottom:8px}
+  .uyari{margin-top:18px;font-size:.92rem;color:var(--soluk);border-left:2px solid var(--kehribar);padding-left:14px}
+
+  /* ——— künye: reklam değil, teknik doğrular ——— */
+  .kunye{background:var(--zemin2)}
+  .kunye dl{margin:26px 0 0;display:grid;gap:1px;background:var(--cizgi);
+            border:1px solid var(--cizgi);border-radius:14px;overflow:hidden}
+  .kunye .satir{background:var(--zemin2);padding:18px 22px;display:grid;
+                grid-template-columns:minmax(0,15em) minmax(0,1fr);gap:20px}
+  .kunye dt{font-family:var(--mono);font-size:.82rem;color:var(--kehribar);line-height:1.5}
+  .kunye dd{margin:0;color:var(--soluk);font-size:.95rem}
+
+  /* ——— fiyat ——— */
+  .fiyat{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-top:26px}
+  .kutu{border:1px solid var(--cizgi);border-radius:16px;padding:24px;background:var(--zemin2)}
+  .kutu.one{border-color:var(--vurgu);background:linear-gradient(180deg,#0F2B27,var(--zemin2))}
+  .kutu .tutar{font-size:1.5rem;font-weight:800;letter-spacing:-.02em;margin-top:4px}
+  .kutu ul{margin:14px 0 0;padding-left:1.1em;color:var(--soluk);font-size:.95rem}
+  .kutu li{margin-bottom:6px}
+
+  footer{padding:36px 0 54px;color:var(--soluk);font-size:.9rem}
+  footer .kap{display:flex;flex-wrap:wrap;gap:14px 26px;align-items:center}
+  footer a{color:var(--soluk)}
+  footer a:hover{color:var(--vurgu)}
+
+  @media (max-width:860px){
+    .giris .kap,.ikili{grid-template-columns:minmax(0,1fr)}
+    .ust .kap{gap:10px}
+    .kanit .kap,ol.adimlar,.fiyat{grid-template-columns:1fr}
+    .sahne{justify-items:stretch;margin-top:26px}
+    .telefon{position:static;width:min(210px,52%);margin:-30px auto 0}
+    .kunye .satir{grid-template-columns:1fr;gap:6px}
+  }
+  @media (max-width:400px){h1{font-size:2.1rem;hyphens:auto;overflow-wrap:break-word}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<header class="ust"><div class="kap">
+  <span class="marka"><span class="rozet">VO</span>MirrorVO</span>
+  <span class="bosluk"></span>
+  <a href="../../bg/" class="ustbag">Поддръжка</a>
+  <select class="langpick" aria-label="Language" onchange="location.href=this.value"><option value="../tr/">Türkçe</option><option value="../en/">English</option><option value="../es/">Español</option><option value="../de/">Deutsch</option><option value="../fr/">Français</option><option value="../it/">Italiano</option><option value="../pt-BR/">Português (Brasil)</option><option value="../ja/">日本語</option><option value="../ru/">Русский</option><option value="../ar/">العربية</option><option value="../nl/">Nederlands</option><option value="../pl/">Polski</option><option value="../sv/">Svenska</option><option value="../da/">Dansk</option><option value="../nb/">Norsk bokmål</option><option value="../fi/">Suomi</option><option value="../cs/">Čeština</option><option value="../sk/">Slovenčina</option><option value="../hu/">Magyar</option><option value="../ro/">Română</option><option value="../el/">Ελληνικά</option><option value="../uk/">Українська</option><option value="../hr/">Hrvatski</option><option value="../sr/">Српски</option><option value="../sl/">Slovenščina</option><option value="../bg/" selected>Български</option><option value="../sq/">Shqip</option><option value="../et/">Eesti</option><option value="../lv/">Latviešu</option><option value="../lt/">Lietuvių</option></select>
+</div></header>
+
+<section class="giris"><div class="kap">
+  <div>
+    <span class="etiket">iPhone · iPad · Wi-Fi</span>
+    <h1
+        style="margin-top:14px">Вашият екран на телевизора. С или без Chromecast.</h1>
+    <p class="satis">MirrorVO пренася екрана на вашия iPhone или iPad на телевизора през вашата собствена Wi-Fi мрежа. Ако имате Chromecast, изберете го от списъка. Ако нямате, използвайте уеб браузъра на самия телевизор — въвеждате кратък адрес само веднъж.</p>
+    <div class="cta">
+      <a class="indir" href="https://apps.apple.com/app/id6799552665">Изтеглете от App Store</a>
+      <span class="not">Без акаунт · Без реклами · Без събиране на данни</span>
+    </div>
+  </div>
+  <div class="sahne">
+    <div class="tv">
+      <div class="cam"><img src="../img/en/ekran-1.png" alt=""></div>
+      <div class="ayak"><span></span></div>
+    </div>
+    <div class="telefon"><img src="../img/en/ekran-1.png"
+      alt="Началният екран на MirrorVO: Излъчи към телевизора, От телефон към телефон"></div>
+  </div>
+</div></section>
+
+<section class="kanit"><div class="kap">
+  <div class="hucre">
+    <h3>Без реклами. Изобщо.</h3>
+    <p>Нито при стартиране, нито преди излъчване, нито на екрана за покупка. Нито при безплатно ползване.</p>
+  </div>
+  <div class="hucre">
+    <h3>Без акаунт</h3>
+    <p>Няма регистрация. Отворете приложението и започнете.</p>
+  </div>
+  <div class="hucre">
+    <h3>Без събиране на данни</h3>
+    <p>Етикетът за поверителност на Apple на нашата страница в App Store гласи „Не се събират данни“. Картината отива директно от телефона до получателя и никога не минава през нашите сървъри.</p>
+  </div>
+</div></section>
+
+<section class="blok"><div class="kap">
+  <div class="ikili">
+    <div>
+      <div class="baslik">
+        <span class="etiket">Два пътя</span>
+        <h2 style="margin-top:10px">Работи и без Chromecast</h2>
+        <p>Повечето приложения в тази категория изискват Chromecast. MirrorVO предлага втори път: уеб браузъра на самия телевизор.</p>
+      </div>
+      <div class="yollar">
+        <div class="yol"><span class="im">1</span><div>
+          <h3>С Chromecast</h3>
+          <p>Chromecast или телевизор с вграден Chromecast: изберете го от списъка и стартирайте.</p>
+        </div></div>
+        <div class="yol"><span class="im">2</span><div>
+          <h3>Без него</h3>
+          <p>MirrorVO показва кратък адрес, въвеждате го веднъж на телевизора и екранът ви се появява. Изпробвано на TCL, Philips и Samsung.</p>
+        </div></div>
+      </div>
+    </div>
+    <img class="ekran" src="../img/en/ekran-2.png"
+         alt="Списъкът с телевизори с ред: Телевизорът не е в списъка? Пренасяйте през браузъра на самия телевизор">
+  </div>
+</div></section>
+
+<section class="blok"><div class="kap">
+  <div class="ikili" style="direction:rtl">
+    <div style="direction:ltr">
+      <div class="baslik">
+        <span class="etiket">Не е нужен телевизор</span>
+        <h2 style="margin-top:10px">Пренасяне към друг телефон</h2>
+        <p>Два телефона един до друг се свързват директно — дори не е нужно да са в една и съща Wi-Fi мрежа. Единият показва код, другият го въвежда.</p>
+      </div>
+    </div>
+    <img class="ekran" src="../img/en/ekran-3.png" style="direction:ltr"
+         alt="Екранът От телефон към телефон: Пренеси този телефон или Гледай излъчване">
+  </div>
+</div></section>
+
+<section class="blok"><div class="kap">
+  <div class="baslik">
+    <span class="etiket">Три стъпки</span>
+    <h2 style="margin-top:10px">Как работи</h2>
+  </div>
+  <ol class="adimlar">
+    <li><span class="no">01</span><h3>Една и съща Wi-Fi мрежа</h3>
+      <p style="color:var(--soluk);font-size:.95rem;margin-top:6px">Свържете телефона и телевизора към една и съща мрежа.</p></li>
+    <li><span class="no">02</span><h3>Изберете телевизора</h3>
+      <p style="color:var(--soluk);font-size:.95rem;margin-top:6px">Изберете го от списъка или използвайте пътя през браузъра.</p></li>
+    <li><span class="no">03</span><h3>Стартирай излъчване</h3>
+      <p style="color:var(--soluk);font-size:.95rem;margin-top:6px">Може да минат 10–15 секунди, докато картината се появи на телевизора.</p></li>
+  </ol>
+  <p class="uyari">Само вие можете да го стартирате. iOS не позволява на приложенията сами да започват излъчване на екрана — системният прозорец всеки път иска вашето потвърждение.</p>
+</div></section>
+
+<section class="blok kunye"><div class="kap">
+  <div class="baslik">
+    <span class="etiket">Честно казано</span>
+    <h2 style="margin-top:10px">Какво не може</h2>
+    <p>Това е написано и на нашата страница в App Store. Предпочитаме да го знаете преди изтеглянето, а не след него.</p>
+  </div>
+  <dl>
+    <div class="satir"><dt>Netflix, Disney+</dt>
+      <dd>Показват се черни. Това е защитата срещу копиране на самата услуга, а не липсваща функция — никое приложение не може да я заобиколи.</dd></div>
+    <div class="satir"><dt>Закъснение</dt>
+      <dd>Не е мигновено. Очаквайте кратко закъснение; такава е природата на тази технология.</dd></div>
+    <div class="satir"><dt>Miracast</dt>
+      <dd>Опцията „Screen Mirroring“ в менюто на телевизора е Miracast. iPhone не поддържа Miracast и никое приложение не може да го използва.</dd></div>
+    <div class="satir"><dt>AirPlay</dt>
+      <dd>Apple не позволява на приложенията директно да стартират AirPlay дублиране. При телевизори с AirPlay използвайте Дублиране на екрана от Контролния център.</dd></div>
+  </dl>
+</div></section>
+
+<section class="blok"><div class="kap">
+  <div class="baslik">
+    <span class="etiket">Качество и цена</span>
+    <h2 style="margin-top:10px">Качеството избирате вие</h2>
+    <p>Четири нива до 1080p60, нищо заключено. Ако мрежата не смогва, качеството само слиза с едно ниво и се връща, щом може — не е нужно да правите нищо.</p>
+  </div>
+  <div class="fiyat">
+    <div class="kutu one">
+      <span class="etiket" style="color:var(--vurgu)">От първото ви излъчване</span>
+      <div class="tutar">24 часа напълно безплатно</div>
+      <ul>
+        <li>Най-високо качество, нищо заключено</li>
+        <li>Най-малко закъснение</li>
+        <li>Виждате, че работи на вашия телевизор, преди да платите каквото и да е</li>
+      </ul>
+    </div>
+    <div class="kutu">
+      <span class="etiket">След това</span>
+      <div class="tutar">Месечно или годишно</div>
+      <ul>
+        <li>За безплатните 24 часа не са нужни данни за карта</li>
+        <li>Цените се различават по региони и се показват в приложението преди покупка</li>
+        <li>Откажете по всяко време от Настройки → Акаунт в Apple → Абонаменти</li>
+      </ul>
+    </div>
+  </div>
+</div></section>
+
+<section class="blok"><div class="kap">
+  <div class="baslik">
+    <span class="etiket">30 езика</span>
+    <h2 style="margin-top:10px">Отваря се на езика на телефона ви</h2>
+    <p>Türkçe, English, Deutsch, Español, Français, Русский, 日本語, العربية и още 22. Ако телефонът е на един език, а искате приложението на друг: Настройки → Език. Останалата част от телефона не се променя.</p>
+  </div>
+  <div class="cta">
+    <a class="indir" href="https://apps.apple.com/app/id6799552665">Изтеглете от App Store</a>
+  </div>
+</div></section>
+
+<footer><div class="kap">
+  <span class="marka"><span class="rozet">VO</span>MirrorVO</span>
+  <span class="bosluk"></span>
+  <a href="../../bg/">Поддръжка</a>
+  <a href="../../bg/privacy.html">Поверителност</a>
+  <a href="../../bg/terms.html">Условия</a>
+  <a href="mailto:ozvey07@gmail.com">ozvey07@gmail.com</a>
+</div></footer>
+</body>
+</html>
