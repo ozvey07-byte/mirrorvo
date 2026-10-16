@@ -216,3 +216,24 @@ footer.site {
 }
 
 footer.site a { color: var(--muted); }
+
+/* Marka rehberleri (/rehber/, 2026-10-16) — App Store düğmesi ve marka listesi. */
+.indir {
+  display: inline-block;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  padding: .7rem 1.2rem;
+  border-radius: 10px;
+  text-decoration: none;
+}
+.indir:hover { opacity: .9; }
+.markalar { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: .5rem; }
+.markalar li { margin: 0; }
+.markalar a {
+  display: inline-block;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: .3rem .85rem;
+  text-decoration: none;
+}
